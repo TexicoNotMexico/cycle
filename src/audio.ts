@@ -4,13 +4,6 @@ import * as CycleShapes from "./createshapes";
 
 let isInitialized = false;
 
-enum Drums {
-    Kick = "kick",
-    Snare = "snare",
-    ClosedHihat = "closed",
-    OpenHihat = "open",
-}
-
 const audioFiles: Tone.ToneAudioBuffersUrlMap = {
     kick: "kick.wav",
     snare: "snare.wav",
@@ -20,7 +13,19 @@ const audioFiles: Tone.ToneAudioBuffersUrlMap = {
 
 let sounds: Tone.Players;
 
-export let drawTriggers: boolean[] = [false, false, false, false];
+export let drawingProperties: [boolean, "right" | "left" | "thru" | "return" | null, Tone.Unit.TimeObject][] = [
+    [false, null, { "8n": 1 }],
+    [false, null, { "8n": 1 }],
+    [false, null, { "8n": 1 }],
+    [false, null, { "8n": 1 }],
+];
+
+export const CycleShapesCollection: CycleShape[] = [
+    CycleShapes.kickCycle,
+    CycleShapes.snareCycle,
+    CycleShapes.closedHihatCycle,
+    CycleShapes.openHihatCycle,
+];
 
 const declareScheduleRepeat = (cycleShapeTarget: CycleShape, drawTriggerIndex: number) => {
     Tone.Transport.scheduleRepeat(
@@ -29,10 +34,10 @@ const declareScheduleRepeat = (cycleShapeTarget: CycleShape, drawTriggerIndex: n
             for (let notes of cycleShapeTarget.path) {
                 if (notes.direction !== "thru") {
                     sounds.player(cycleShapeTarget.instrument).start(time + cumulativeDuration);
-                    Tone.Draw.schedule(() => {
-                        drawTriggers[drawTriggerIndex] = true;
-                    }, time + cumulativeDuration);
                 }
+                Tone.Draw.schedule(() => {
+                    drawingProperties[drawTriggerIndex] = [true, notes.direction, notes.duration];
+                }, time + cumulativeDuration);
                 cumulativeDuration += Tone.Time(notes.duration).valueOf();
             }
         },
@@ -48,10 +53,9 @@ const initializeTonejs = async () => {
 
     Tone.Transport.bpm.value = 100;
 
-    declareScheduleRepeat(CycleShapes.kickCycle, 0);
-    declareScheduleRepeat(CycleShapes.snareCycle, 1);
-    declareScheduleRepeat(CycleShapes.closedHihatCycle, 2);
-    declareScheduleRepeat(CycleShapes.openHihatCycle, 3);
+    CycleShapesCollection.forEach((cycle, index) => {
+        declareScheduleRepeat(cycle, index);
+    });
 
     await Tone.loaded();
 
@@ -61,7 +65,10 @@ const initializeTonejs = async () => {
 export const playSound = async () => {
     if (!isInitialized) await initializeTonejs();
 
-    if (Tone.Transport.state === "started") Tone.Transport.stop();
+    if (Tone.Transport.state === "started") {
+        Tone.Transport.pause();
+        return;
+    }
 
     Tone.Transport.start("+0", "0:0:0");
 };
