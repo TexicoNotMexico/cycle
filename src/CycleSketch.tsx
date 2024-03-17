@@ -10,7 +10,7 @@ const CycleSketch = () => {
         ["孕", "#FF8800"],
     ];
 
-    let x = [-750, -250, 250, 750];
+    let x = [-700, -700, -700, -700];
     let y = [0, 0, 0, 0];
     let distance = [80, 80, 80, 80];
     let angle = [0, 0, 0, 0];
@@ -23,20 +23,20 @@ const CycleSketch = () => {
         };
 
         p5.draw = () => {
-            p5.background(10, 8);
+            p5.background(10, 13);
             p5.translate(p5.width / 2, p5.height / 2);
 
             drawingProperties.forEach((value, index, array) => {
                 if (value[0] === true) {
-                    //p5.textSize(200);
-                    //p5.textAlign(p5.CENTER, p5.CENTER);
-                    //p5.noStroke();
-                    //p5.fill(colorsAndNames[index][1]);
-                    //p5.text(
-                    //    colorsAndNames[index][0],
-                    //    index === 0 || index === 2 ? 450 : 1250,
-                    //    index === 0 || index === 1 ? 200 : 700
-                    //);
+                    p5.textSize(200);
+                    p5.textAlign(p5.CENTER, p5.CENTER);
+                    p5.noStroke();
+                    p5.fill(colorsAndNames[index][1]);
+                    p5.text(
+                        colorsAndNames[index][0],
+                        index === 0 || index === 2 ? -500 : 500,
+                        index === 0 || index === 1 ? -200 : 200
+                    );
 
                     distance[index] = Tone.Time(value[2]).toTicks();
 
