@@ -1,4 +1,5 @@
 import * as Tone from "tone";
+import { CycleShape } from "./types/CycleShape";
 import * as CycleShapes from "./createshapes";
 
 let isInitialized = false;
@@ -19,6 +20,27 @@ const audioFiles: Tone.ToneAudioBuffersUrlMap = {
 
 let sounds: Tone.Players;
 
+export let drawTriggers: boolean[] = [false, false, false, false];
+
+const declareScheduleRepeat = (cycleShapeTarget: CycleShape, drawTriggerIndex: number) => {
+    Tone.Transport.scheduleRepeat(
+        (time) => {
+            let cumulativeDuration: number = 0;
+            for (let notes of cycleShapeTarget.path) {
+                if (notes.direction !== "thru") {
+                    sounds.player(cycleShapeTarget.instrument).start(time + cumulativeDuration);
+                    Tone.Draw.schedule(() => {
+                        drawTriggers[drawTriggerIndex] = true;
+                    }, time + cumulativeDuration);
+                }
+                cumulativeDuration += Tone.Time(notes.duration).valueOf();
+            }
+        },
+        cycleShapeTarget.loopDuration,
+        "+0"
+    );
+};
+
 const initializeTonejs = async () => {
     await Tone.start();
 
@@ -26,53 +48,10 @@ const initializeTonejs = async () => {
 
     Tone.Transport.bpm.value = 100;
 
-    Tone.Transport.scheduleRepeat(
-        (time) => {
-            let cumulativeDuration: number = 0;
-            for (let notes of CycleShapes.kickCycle.path) {
-                if (notes.direction !== "thru") sounds.player(Drums.Kick).start(time + cumulativeDuration);
-                cumulativeDuration += Tone.Time(notes.duration).valueOf();
-            }
-        },
-        CycleShapes.kickCycle.loopDuration,
-        "+0"
-    );
-
-    Tone.Transport.scheduleRepeat(
-        (time) => {
-            let cumulativeDuration: number = 0;
-            for (let notes of CycleShapes.snareCycle.path) {
-                if (notes.direction !== "thru") sounds.player(Drums.Snare).start(time + cumulativeDuration);
-                cumulativeDuration += Tone.Time(notes.duration).valueOf();
-            }
-        },
-        CycleShapes.snareCycle.loopDuration,
-        "+0"
-    );
-
-    Tone.Transport.scheduleRepeat(
-        (time) => {
-            let cumulativeDuration: number = 0;
-            for (let notes of CycleShapes.closedHihatCycle.path) {
-                if (notes.direction !== "thru") sounds.player(Drums.ClosedHihat).start(time + cumulativeDuration);
-                cumulativeDuration += Tone.Time(notes.duration).valueOf();
-            }
-        },
-        CycleShapes.closedHihatCycle.loopDuration,
-        "+0"
-    );
-
-    Tone.Transport.scheduleRepeat(
-        (time) => {
-            let cumulativeDuration: number = 0;
-            for (let notes of CycleShapes.openHihatCycle.path) {
-                if (notes.direction !== "thru") sounds.player(Drums.OpenHihat).start(time + cumulativeDuration);
-                cumulativeDuration += Tone.Time(notes.duration).valueOf();
-            }
-        },
-        CycleShapes.openHihatCycle.loopDuration,
-        "+0"
-    );
+    declareScheduleRepeat(CycleShapes.kickCycle, 0);
+    declareScheduleRepeat(CycleShapes.snareCycle, 1);
+    declareScheduleRepeat(CycleShapes.closedHihatCycle, 2);
+    declareScheduleRepeat(CycleShapes.openHihatCycle, 3);
 
     await Tone.loaded();
 
